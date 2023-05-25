@@ -1,0 +1,120 @@
+
+version: '3'
+
+networks:
+  local_net:
+    driver: bridge
+
+services:
+
+  pg:
+    image: postgres
+    container_name: pg
+    ports:
+      - 5430:5432
+    environment:
+      POSTGRES_PASSWORD: "root"
+    volumes:
+      - ./postgres/data:/var/lib/postgresql/data     # saving DB-s data
+      - ./postgres/init:/docker-entrypoint-initdb.d  # joining folder with initial files
+      - ./postgres/init_x:/init_x                    # joining folder with support command files
+      - ./postgres/log:/log
+    networks:
+      - local_net
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    ports:
+      - 5431:80
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "mail@mail.io"
+      PGADMIN_DEFAULT_PASSWORD: "root"
+      PGADMIN_CONFIG_SERVER_MODE: "False" # only for dev
+    volumes:
+      - ./postgres/pgadmin:/var/lib/pgadmin
+    depends_on:
+      - pg
+    networks:
+      - local_net
+
+  rabbitmq:
+    image: rabbitmq:management-alpine
+    container_name: rabbitmq
+    ports:
+      - 5672:5672
+      - 15672:15672
+    volumes:
+      - ./rabbitmq/durables/:/var/lib/rabbitmq/  # saving durables queues
+      - ./rabbitmq/logs/:/var/log/rabbitmq       # saving logs
+    networks:
+      - local_net
+
+  gate:
+    image: keronon/gate:v3
+    container_name: gate
+    ports:
+      - 12120:12120
+    networks:
+      - local_net
+
+  users:
+    image: keronon/users:v3
+    container_name: users
+    depends_on:
+      - pg
+      - rabbitmq
+    ports:
+      - 12121:12121
+    networks:
+      - local_net
+
+  profiles:
+    image: keronon/profiles:v3
+    container_name: profiles
+    depends_on:
+      - pg
+      - rabbitmq
+    ports:
+      - 12122:12122
+    volumes:
+      - ./images/profiles:/root/_files
+    networks:
+      - local_net
+
+  films:
+    image: keronon/films:v3
+    container_name: films
+    depends_on:
+      - pg
+      - rabbitmq
+    ports:
+      - 12123:12123
+    volumes:
+      - ./images/films:/root/_files
+    networks:
+      - local_net
+
+  film_info:
+    image: keronon/film_info:v3
+    container_name: film_info
+    depends_on:
+      - pg
+      - rabbitmq
+    ports:
+      - 12124:12124
+    networks:
+      - local_net
+
+  members:
+    image: keronon/members:v3
+    container_name: members
+    depends_on:
+      - pg
+      - rabbitmq
+    ports:
+      - 12125:12125
+    volumes:
+      - ./images/members:/root/_files
+    networks:
+      - local_net
