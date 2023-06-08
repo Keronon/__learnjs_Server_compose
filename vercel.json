@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "builds": [
+    {
+      "src": "docker-compose.yml",
+      "use": "@vercel/docker"
+    }
+  ],
+  "env": {
+    "DOCKER_COMPOSE": "true",
+    "DOCKER_COMPOSE_YML": "docker-compose.yml",
+    "DOCKER_COMPOSE_PROJECT_NAME": "learnjs_Server"
+  }
+}
